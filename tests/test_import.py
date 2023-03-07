@@ -25,6 +25,7 @@ class TestDataImport(unittest.TestCase):
         self.sql_url = 'mysql://user:password@localhost/test_db'
         self.sql_query = 'SELECT * FROM data_table'
         self.data_import = data_importer.DataImport(self.csv_file)
+        self.data_import.filename = 'data.pkl'
 
     def test_import_csv(self):
         df = self.data_import.import_csv()
@@ -42,6 +43,10 @@ class TestDataImport(unittest.TestCase):
 
     def test_import_sql(self):
         df = self.data_import.import_sql(url=self.sql_url, query=self.sql_query)
+        self.assertIsInstance(df, pd.DataFrame)
+        
+    def test_import_pickle(self):
+        df = self.data_import.import_pickle()
         self.assertIsInstance(df, pd.DataFrame)
 
 if __name__ == '__main__':

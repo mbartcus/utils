@@ -37,3 +37,6 @@ class DataImporter:
         with open(self.filename, 'r') as f:
             data = json.load(f)
         return pd.json_normalize(data)
+    
+    def import_pickle(self):
+        return pd.read_pickle(self.filename)
