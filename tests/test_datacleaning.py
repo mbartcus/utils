@@ -2,32 +2,35 @@ import sys
 # import your modules and packages from anywhere, i.e., from any directory on your computer.
 sys.path.append('../utils/utils')
 
+import data_cleaning as dc
 import pandas as pd
 import unittest
-import data_cleaning as dc
+
 
 class TestDataCleaning(unittest.TestCase):
     
     def setUp(self):
         # Create sample data for testing
-        self.data = pd.DataFrame({
-            'A': [1, 2, 3, 3, 4, 5, 6, 7, 8, 9, 9, 10],
-            'B': [1, 2, 3, 4, 5, 6, 7, None, 9, 10, 11, 12],
-            'C': ['apple', 'orange', 'banana', 'orange', 'apple', 'orange', 'banana', 'orange', 'apple', 'orange', 'banana', 'orange']
+        self.initial_data = pd.DataFrame({
+            'A': [1, 2, 3000, 3, 4, 5, 6, 7, 8, 9, 9, 10, 2],
+            'B': [1, 2, 3, 4, 5, 6, 7, None, 9, 10, 11, 12, 2],
+            'C': ['apple', 'orange', 'banana', 'orange', 'apple', 'orange', 'banana', 'orange', 'apple', 'orange', 'banana', 'orange', 'orange']
         })
         
+        self.len_data = len(self.initial_data)
+
         # Instantiate the DataCleaning object with the sample data
-        self.dc = dc.DataCleaning(self.data)
+        self.dc = dc.DataCleaning(self.initial_data)
     
     def test_remove_duplicates(self):
         # Test removing duplicates
         self.dc.remove_duplicates()
-        self.assertEqual(len(self.dc.data), 10)
+        self.assertEqual(len(self.dc.data),  self.len_data-1)
     
     def test_remove_outliers(self):
         # Test removing outliers
         self.dc.remove_outliers('A')
-        self.assertEqual(len(self.dc.data), 10)
+        self.assertEqual(len(self.dc.data), self.len_data-1)
     
     def test_fill_missing_values(self):
         # Test filling missing values with mean
@@ -49,7 +52,7 @@ class TestDataCleaning(unittest.TestCase):
     def test_drop_missing_values(self):
         # Test dropping missing values
         self.dc.drop_missing_values()
-        self.assertEqual(len(self.dc.data), 10)
+        self.assertEqual(len(self.dc.data), self.len_data-1)
     
     def test_convert_to_numeric(self):
         # Test converting a column to numeric
