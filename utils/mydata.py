@@ -1,23 +1,30 @@
 import pandas as pd
+import numpy as np
 from data_importer import DataImporter
+from custom_logger import get_custom_logger
 
 numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
 class MyData:
-    def __init__(self, filename):
+    def __init__(self, filename, isInfo=False):
         """
         A class to represent a dataset with basic functionality.
 
         Parameters:
             filename (str): The name of the file containing the dataset.
+            isInfo (bool): Whether to print the information on working with MyData class.
 
         Attributes:
             data_importer (DataImporter): An instance of the DataImporter class used to load the data.
             data (pandas.DataFrame): The loaded dataset.
 
         """
+        self.isInfo = isInfo
+        self.logger = get_custom_logger()
         self.data_importer = DataImporter(filename)
         self.data = self.data_importer.load_data()
+        
+        if self.isInfo: self.logger.info('Loaded dataset.')
 
     def get_summary_statistics(self):
         """
@@ -201,7 +208,7 @@ class MyData:
         '% of Total Values', ascending=False).round(1)
 
         # Print some summary information
-        print ("Your selected dataframe has " + str(df.shape[1]) + " columns.\n"
+        if self.isInfo: self.logger.info("Your selected dataframe has " + str(seld.data.shape[1]) + " columns.\n"
             "There are " + str(mis_val_table_ren_columns.shape[0]) +
               " columns that have missing values.")
 
@@ -275,6 +282,68 @@ class MyData:
 
         """
         self.data = self.data.drop(columns=columns)
+        
+    def reduce_dataframe_memory_usage(self, high_precision = False):
+        """
+        Iterate through all the columns of a dataframe and modify the data type to
+        reduce memory usage.
+        Args:
+            high_precision (bool): If True, use 64-bit floats instead of 32-bit
+        Returns:
+            pd.DataFrame: dataframe with reduced memory usage.
+        """
+        start_mem = round(self.data.memory_usage().sum() / 1024 ** 2, 2)
+        if self.isInfo: self.logger.info("Memory usage of dataframe is {0} MB".format(start_mem)) #logging.info
+        
+        # Iterate through columns
+        for col in self.data.columns:
+            if self.data[col].dtype == "object":
+                # "object" dtype
+                if self.data[col].nunique() < max(100, self.data.shape[0] / 100):
+                    # If number of unique values is less than max(100, 1%)
+                    self.data[col] = self.data[col].astype("category")
+                else:
+                    # If number of unique values is greater than max(100, 1%)
+                    self.data[col] = self.data[col].astype("string")
+
+            elif str(self.data[col].dtype)[:3] == "int":
+                # "int" dtype
+                c_min = self.data[col].min()
+                c_max = self.data[col].max()
+                if c_min > np.iinfo(np.uint8).min and c_max < np.iinfo(np.uint8).max:
+                    self.data[col] = df[col].astype("UInt8")
+                elif c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
+                    self.data[col] = self.data[col].astype("Int8")
+                elif c_min > np.iinfo(np.uint16).min and c_max < np.iinfo(np.uint16).max:
+                    self.data[col] = self.data[col].astype("UInt16")
+                elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
+                    self.data[col] = self.data[col].astype("Int16")
+                elif c_min > np.iinfo(np.uint32).min and c_max < np.iinfo(np.uint32).max:
+                    self.data[col] = self.data[col].astype("UInt32")
+                elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
+                    self.data[col] = self.data[col].astype("Int32")
+                elif c_min > np.iinfo(np.uint64).min and c_max < np.iinfo(np.uint64).max:
+                    self.data[col] = self.data[col].astype("UInt64")
+                else:
+                    self.data[col] = self.data[col].astype("Int64")
+
+            elif str(self.data[col].dtype)[:5] == "float":
+                # "float" dtype
+                c_min = self.data[col].min()
+                c_max = self.data[col].max()
+                if (
+                    not high_precision
+                    and c_min > np.finfo(np.float32).min
+                    and c_max < np.finfo(np.float32).max
+                ):
+                    self.data[col] = self.data[col].astype("float32")
+                else:
+                    self.data[col] = self.data[col].astype("float64")
+
+        end_mem = round(self.data.memory_usage().sum() / 1024 ** 2, 2)
+        if self.isInfo: self.logger.info("Memory usage after reduction is {0} MB".format(end_mem)) #logging.info
+        if (self.isInfo & start_mem > 0) : self.logger.info("Memory usage decreased from {0} MB to {1} MB ({2} % reduction)".format(start_mem, end_mem, round(100 * (start_mem - end_mem) / start_mem, 2))) #logging.info
+            
 
 from sklearn.preprocessing import PolynomialFeatures
 from enums import AggregationsTypes
