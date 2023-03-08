@@ -85,22 +85,4 @@ class DataCleaning:
         """
         self.data = self.data.dropna()
 
-    def convert_to_numeric(self, column):
-        """
-        Converts the specified column of the DataFrame to numeric values.
-
-        Args:
-        column (str): The name of the column to be converted.
-        """
-        self.data[column] = pd.to_numeric(self.data[column], errors="coerce")
-
-    def encode_categorical(self, column):
-        """
-        Encodes categorical data in the specified column of the DataFrame as numeric values.
-
-        Args:
-        column (str): The name of the column to be encoded.
-        """
-        categories = self.data[column].unique()
-        mapping = {category: i for i, category in enumerate(categories)}
-        self.data[column] = self.data[column].replace(mapping)
+    
